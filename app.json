@@ -2,9 +2,16 @@
   "expo": {
     "name": "MYTHØS RP",
     "slug": "mythos-rp-launcher",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "orientation": "portrait",
-    "android": {"package": "br.com.mythos.rp", "versionCode": 1},
-    "plugins": []
+    "android": {
+      "package": "br.com.mythos.rp",
+      "versionCode": 2,
+      "permissions": ["INTERNET"]
+    },
+    "plugins": [],
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    }
   }
 }
