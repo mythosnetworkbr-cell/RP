@@ -39,6 +39,12 @@ jobs:
       - name: Validate Expo project
         run: npx expo config --type public
 
+      - name: Ensure EAS project is linked
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          eas init --account mythosstudios-team --non-interactive
+
       - name: Build preview APK
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
