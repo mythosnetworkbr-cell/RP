@@ -1,0 +1,10 @@
+{
+  "expo": {
+    "name": "MYTHØS RP",
+    "slug": "mythos-rp-launcher",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "android": {"package": "br.com.mythos.rp", "versionCode": 1},
+    "plugins": []
+  }
+}
