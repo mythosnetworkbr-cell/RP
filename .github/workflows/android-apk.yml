@@ -11,16 +11,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
         with:
-          node-version: 20
-          cache: npm
+          node-version: '20.x'
+          package-manager-cache: false
+
+      - name: Verify Node.js
+        run: |
+          node --version
+          npm --version
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install --no-audit --no-fund
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -31,6 +36,9 @@ jobs:
       - name: Install Expo/EAS CLI
         run: npm install --global eas-cli
 
+      - name: Validate Expo project
+        run: npx expo config --type public
+
       - name: Build preview APK
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
@@ -40,4 +48,4 @@ jobs:
         if: always()
         run: |
           echo 'MYTHØS RP APK build finished.'
-          echo 'The EAS build page contains the APK artifact when successful.'
+          echo 'If successful, the EAS build URL contains the APK artifact.'
