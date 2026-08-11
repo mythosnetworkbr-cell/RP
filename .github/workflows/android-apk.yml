@@ -33,25 +33,32 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Install Expo/EAS CLI
-        run: npm install --global eas-cli
+      - name: Install latest Expo/EAS CLI
+        run: npm install --global eas-cli@latest
 
       - name: Validate Expo project
         run: npx expo config --type public
 
-      - name: Ensure EAS project is linked
+      - name: Link EAS project non-interactively
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
-          eas init --account mythosstudios-team --non-interactive
+          eas init --force --non-interactive
+          echo '--- app.json after EAS init ---'
+          cat app.json
+          echo '--- EAS project info ---'
+          eas project:info --non-interactive
+          echo '--- EAS config ---'
+          eas config --platform android --profile preview --json --non-interactive
 
       - name: Build preview APK
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          EAS_BUILD_NO_EXPO_GO_WARNING: 'true'
         run: eas build --platform android --profile preview --non-interactive --wait
 
       - name: Build summary
         if: always()
         run: |
           echo 'MYTHØS RP APK build finished.'
-          echo 'If successful, the EAS build URL contains the APK artifact.'
+          echo 'Check the EAS build URL above for the APK artifact.'
