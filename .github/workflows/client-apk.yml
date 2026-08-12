@@ -45,6 +45,17 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           import json
+
+          # The upstream project still declares the retired Splunk Mint Maven
+          # repository (and JCenter). Remove both so Gradle resolves modern
+          # dependencies from Maven Central/JitPack instead.
+          root=Path('build.gradle')
+          rs=root.read_text()
+          rs=rs.replace("        jcenter()\n", "")
+          rs=rs.replace("        maven { url 'https://mint.splunk.com/gradle/'}\n", "")
+          rs=rs.replace('        jcenter()\n', '')
+          root.write_text(rs)
+
           p=Path('app/build.gradle')
           s=p.read_text()
           s=s.replace('applicationId "com.samp.mobile"','applicationId "br.com.mythos.sampclient"')
