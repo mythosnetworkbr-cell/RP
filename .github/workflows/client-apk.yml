@@ -1,0 +1,111 @@
+name: MYTHØS SA-MP Mobile Client
+
+on:
+  push:
+    paths:
+      - '.github/workflows/client-apk.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mythos-samp-client
+  cancel-in-progress: true
+
+jobs:
+  build-client:
+    name: Build native SA-MP client
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout Mythos launcher
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Android SDK/NDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android NDK 26.2
+        run: sdkmanager 'ndk;26.2.11394342' 'platforms;android-34' 'build-tools;34.0.0'
+
+      - name: Checkout open-source SA-MP Mobile client
+        run: git clone --depth 1 --branch GTA-2.10 https://github.com/kuzia15/SAMP-Mobile.git client
+
+      - name: Prepare Mythos client build
+        working-directory: client
+        shell: bash
+        run: |
+          set -e
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          p=Path('app/build.gradle')
+          s=p.read_text()
+          s=s.replace('applicationId "com.samp.mobile"','applicationId "br.com.mythos.sampclient"')
+          s=s.replace('signingConfig signingConfigs.release','signingConfig signingConfigs.debug')
+          s=s.replace('storeFile file("../../keys/new.jks")','// Mythos CI uses the Android debug keystore')
+          s=s.replace('storePassword "123123"','')
+          s=s.replace('keyAlias "key0"','')
+          s=s.replace('keyPassword "123123"','')
+          p.write_text(s)
+          g=Path('app/google-services.json')
+          if g.exists():
+            data=json.loads(g.read_text())
+            for c in data.get('client',[]):
+              c.setdefault('client_info',{}).setdefault('android_client_info',{})['package_name']='br.com.mythos.sampclient'
+            g.write_text(json.dumps(data,indent=2))
+          m=Path('app/src/main/AndroidManifest.xml')
+          ms=m.read_text()
+          ms=ms.replace('android:label="@string/app_name"','android:label="MYTHØS SA-MP Mobile"')
+          marker='''        <intent-filter>\n            <action android:name="android.intent.action.MAIN" />\n            <category android:name="android.intent.category.LAUNCHER" />\n        </intent-filter>'''
+          repl=marker+'''\n        <intent-filter>\n            <action android:name="android.intent.action.VIEW" />\n            <category android:name="android.intent.category.DEFAULT" />\n            <category android:name="android.intent.category.BROWSABLE" />\n            <data android:scheme="samp" />\n        </intent-filter>'''
+          ms=ms.replace(marker,repl,1)
+          m.write_text(ms)
+          PY
+
+      - name: Build APK
+        working-directory: client
+        env:
+          ANDROID_NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/26.2.11394342
+        run: chmod +x gradlew && ./gradlew assembleRelease --no-daemon --stacktrace
+
+      - name: Publish client APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          TAG="client-v0.8.2.1-${GITHUB_RUN_NUMBER}"
+          cp client/app/build/outputs/apk/release/app-release.apk mythos-samp-mobile.apk
+          gh release create "$TAG" mythos-samp-mobile.apk --repo "$GITHUB_REPOSITORY" --title "MYTHØS SA-MP Mobile $TAG" --notes "Native SA-MP Mobile client built from the open-source GTA-2.10 branch of kuzia15/SAMP-Mobile. Mythos-specific Android package and samp:// intent integration."
+          URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/mythos-samp-mobile.apk"
+          python3 - <<PY
+          import json
+          p='client-manifest.json'
+          d=json.load(open(p))
+          d['version']='0.8.2.1-mythos'
+          d['packageName']='br.com.mythos.sampclient'
+          d['launchScheme']='samp'
+          d['server']={'host':'51.68.107.75','port':10961}
+          d['artifact']={'type':'apk','url':'$URL','sha256':None,'size':None}
+          d['status']='published'
+          d['notes']='MYTHØS SA-MP Mobile client build published by GitHub Actions.'
+          open(p,'w').write(json.dumps(d,indent=2,ensure_ascii=False)+'\n')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add client-manifest.json
+          git commit -m "chore: publish Mythos SA-MP client manifest" || true
+          git push
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mythos-samp-mobile-apk
+          path: mythos-samp-mobile.apk
+          retention-days: 14
