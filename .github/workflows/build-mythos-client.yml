@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: kuzia15/SAMP-Mobile
-          ref: GTA-2.10
+          ref: GTA-2.11
           path: mythos-client
       - name: Setup Java 17
         uses: actions/setup-java@v4
@@ -49,7 +49,7 @@ jobs:
           PY
           keytool -genkeypair -v -keystore app/mythos-release.keystore -alias mythos -keyalg RSA -keysize 2048 -validity 10000 -storepass mythos123 -keypass mythos123 -dname "CN=MYTHOS NETWORK, OU=RP, O=MYTHOS NETWORK, L=BR, ST=SP, C=BR"
           mkdir -p app/src/main/res/values
-          printf '%s\n' '<resources><string name="app_name">MYTHØS SA-MP Mobile</string></resources>' > app/src/main/res/values/strings.xml
+          printf '%s\n' '<resources><string name="app_name">MYTHØS SA-MP Mobile 2.11</string></resources>' > app/src/main/res/values/strings.xml
       - name: Build client APK
         working-directory: mythos-client
         run: |
@@ -58,7 +58,7 @@ jobs:
       - name: Publish client APK
         uses: actions/upload-artifact@v4
         with:
-          name: mythos-samp-mobile-v1.0.0
+          name: mythos-samp-mobile-2.11-v1.0.0
           path: mythos-client/app/build/outputs/apk/release/*.apk
           if-no-files-found: error
           retention-days: 30
