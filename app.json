@@ -2,15 +2,18 @@
   "expo": {
     "name": "MYTHØS RP",
     "slug": "mythos-rp-launcher",
-    "version": "0.5.1",
+    "version": "0.6.1",
     "orientation": "portrait",
     "owner": "mythosstudios-team",
     "android": {
       "package": "br.com.mythos.rp",
-      "versionCode": 7,
+      "versionCode": 8,
       "permissions": [
         "INTERNET",
-        "REQUEST_INSTALL_PACKAGES"
+        "REQUEST_INSTALL_PACKAGES",
+        "MANAGE_EXTERNAL_STORAGE",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
       ],
       "intentFilters": [
         {
