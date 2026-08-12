@@ -33,6 +33,10 @@ jobs:
         working-directory: mythos-client
         shell: bash
         run: |
+          # The upstream branch stores part of the native SA-MP source in cpp.zip.
+          # Extract it before CMake so headers such as samp_widgets/playerTabList.h exist.
+          unzip -o app/src/main/cpp/cpp.zip -d app/src/main/cpp
+
           python3 - <<'PY'
           from pathlib import Path
           import re
