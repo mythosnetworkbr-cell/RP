@@ -16,5 +16,5 @@
     "size": null
   },
   "status": "pending-client-build",
-  "notes": "The launcher integration is ready. Publish the signed Mythos SA-MP Mobile APK here once the native client build is available."
+  "notes": "Launcher integration is ready. A signed Mythos SA-MP Mobile APK must be published here before automatic client installation can work."
 }
