@@ -1,13 +1,14 @@
 {
   "expo": {
-    "name": "MYTHØS RP",
-    "slug": "mythos-rp-launcher",
-    "version": "0.6.1",
+    "name": "RPGRAM",
+    "slug": "rpgram-mythos-network",
+    "version": "0.7.0",
     "orientation": "portrait",
     "owner": "mythosstudios-team",
+    "icon": "./assets/logo.jpg",
     "android": {
       "package": "br.com.mythos.rp",
-      "versionCode": 8,
+      "versionCode": 9,
       "permissions": [
         "INTERNET",
         "REQUEST_INSTALL_PACKAGES",
