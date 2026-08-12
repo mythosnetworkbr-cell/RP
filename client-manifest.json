@@ -1,0 +1,20 @@
+{
+  "name": "MYTHØS SA-MP Mobile",
+  "version": "0.1.0",
+  "platform": "android",
+  "architecture": ["arm64-v8a", "armeabi-v7a"],
+  "packageName": "br.com.mythos.sampclient",
+  "launchScheme": "samp",
+  "server": {
+    "host": "51.68.107.75",
+    "port": 10961
+  },
+  "artifact": {
+    "type": "apk",
+    "url": null,
+    "sha256": null,
+    "size": null
+  },
+  "status": "pending-client-build",
+  "notes": "The launcher integration is ready. Publish the signed Mythos SA-MP Mobile APK here once the native client build is available."
+}
