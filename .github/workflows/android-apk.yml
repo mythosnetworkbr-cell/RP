@@ -11,7 +11,7 @@ permissions:
 
 concurrency:
   group: mythos-rp-android-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build-apk:
@@ -49,21 +49,20 @@ jobs:
         run: |
           test -n "$EXPO_TOKEN" || { echo 'EXPO_TOKEN is missing'; exit 1; }
           eas init --force --non-interactive
-          echo '=== app.json ==='
-          cat app.json
-          echo '=== EAS project ==='
           eas project:info --non-interactive
-          echo '=== EAS config ==='
           eas config --platform android --profile preview --json --non-interactive
 
-      - name: Build preview APK
+      - name: Start EAS APK build
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           EAS_BUILD_NO_EXPO_GO_WARNING: 'true'
-        run: eas build --platform android --profile preview --non-interactive --wait
+        run: |
+          set -o pipefail
+          eas build --platform android --profile preview --non-interactive 2>&1 | tee eas-build-output.txt
 
-      - name: Build summary
+      - name: Publish build reference
         if: always()
         run: |
-          echo 'MYTHØS RP Android build finished.'
-          echo 'If successful, the EAS output above contains the APK artifact URL.'
+          echo '### MYTHØS RP APK BUILD' >> "$GITHUB_STEP_SUMMARY"
+          grep -E 'https://expo.dev/.*/builds/|Build ID|Build URL' eas-build-output.txt >> "$GITHUB_STEP_SUMMARY" || true
+          echo 'EAS build was submitted. The build can continue on EAS after this GitHub job finishes.' >> "$GITHUB_STEP_SUMMARY"
