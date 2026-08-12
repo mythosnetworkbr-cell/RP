@@ -1,6 +1,6 @@
 {
   "name": "MYTHØS SA-MP Mobile",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "platform": "android",
   "architecture": ["arm64-v8a", "armeabi-v7a"],
   "packageName": "br.com.mythos.sampclient",
@@ -11,10 +11,10 @@
   },
   "artifact": {
     "type": "apk",
-    "url": null,
+    "url": "https://github.com/mythosnetworkbr-cell/RP/releases/download/mythos-client-v1.0.0/mythos-samp-mobile-2.11-v1.0.0.apk",
     "sha256": null,
     "size": null
   },
-  "status": "pending-client-build",
-  "notes": "Launcher integration is ready. A signed Mythos SA-MP Mobile APK must be published here before automatic client installation can work."
+  "status": "build-and-publish-on-push",
+  "notes": "The Android launcher downloads the signed client from the GitHub release created by the client build workflow."
 }
