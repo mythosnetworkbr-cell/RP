@@ -2,17 +2,22 @@
   "expo": {
     "name": "MYTHØS RP",
     "slug": "mythos-rp-launcher",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "orientation": "portrait",
     "owner": "mythosstudios-team",
     "android": {
       "package": "br.com.mythos.rp",
-      "versionCode": 2,
-      "permissions": ["INTERNET"]
+      "versionCode": 3,
+      "permissions": ["INTERNET"],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "category": ["BROWSABLE", "DEFAULT"],
+          "data": [{"scheme": "samp"}]
+        }
+      ]
     },
     "plugins": [],
-    "updates": {
-      "fallbackToCacheTimeout": 0
-    }
+    "updates": {"fallbackToCacheTimeout": 0}
   }
 }
