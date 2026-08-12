@@ -1,0 +1,83 @@
+name: Build MYTHØS SA-MP Client
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/build-mythos-client.yml'
+
+jobs:
+  build-client:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout launcher repository
+        uses: actions/checkout@v4
+
+      - name: Checkout authorized SA-MP Mobile source
+        uses: actions/checkout@v4
+        with:
+          repository: kuzia15/SAMP-Mobile
+          ref: GTA-2.10
+          path: mythos-client
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Prepare MYTHØS branding and build config
+        working-directory: mythos-client
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('app/build.gradle')
+          s=p.read_text()
+          s=s.replace("id 'com.google.gms.google-services'\n", '')
+          s=s.replace("id 'com.google.firebase.crashlytics'\n", '')
+          s=s.replace('namespace \'com.samp.mobile\'', 'namespace \'br.com.mythos.sampclient\'')
+          s=s.replace('applicationId "com.samp.mobile"', 'applicationId "br.com.mythos.sampclient"')
+          s=s.replace('versionCode 105', 'versionCode 1')
+          s=s.replace('versionName "0.8.2.1"', 'versionName "1.0.0"')
+          s=s.replace('storeFile file("../../keys/new.jks")', 'storeFile file("mythos-debug.keystore")')
+          s=s.replace('storePassword "123123"', 'storePassword "android"')
+          s=s.replace('keyAlias "key0"', 'keyAlias "androiddebugkey"')
+          s=s.replace('keyPassword "123123"', 'keyPassword "android"')
+          start=s.find('            firebaseCrashlytics {')
+          if start >= 0:
+              end=s.find('            }\n            debuggable false', start)
+              if end >= 0:
+                  s=s[:start]+s[end+len('            }\n'):]
+          for dep in ["    implementation 'com.google.firebase:firebase-analytics:21.2.0'\n", "    implementation 'com.google.firebase:firebase-crashlytics-ndk:18.3.5'\n", "    implementation platform('com.google.firebase:firebase-bom:30.1.0')\n", "    implementation 'com.google.firebase:firebase-messaging:23.1.1'\n"]:
+              s=s.replace(dep,'')
+          p.write_text(s)
+          PY
+          keytool -genkeypair -v -keystore app/mythos-debug.keystore -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=MYTHOS, OU=Network, O=MYTHOS, L=BR, ST=SP, C=BR"
+          mkdir -p app/src/main/res/values
+          cat > app/src/main/res/values/strings.xml <<'EOF'
+          <resources><string name="app_name">MYTHØS SA-MP Mobile</string></resources>
+          EOF
+
+      - name: Configure server endpoint
+        working-directory: mythos-client
+        shell: bash
+        run: |
+          grep -RIl --exclude-dir=.git --exclude='*.png' --exclude='*.jpg' --exclude='*.so' '127.0.0.1\|localhost\|192.168.' app | head -100 || true
+          find app/src/main -type f \( -name '*.cpp' -o -name '*.cc' -o -name '*.h' -o -name '*.java' -o -name '*.kt' \) -print0 | xargs -0 grep -Il 'server\|hostname\|ip' | head -50 || true
+
+      - name: Make Gradle executable
+        working-directory: mythos-client
+        run: chmod +x gradlew
+
+      - name: Build release APK
+        working-directory: mythos-client
+        run: ./gradlew assembleRelease --no-daemon --stacktrace
+
+      - name: Publish client APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mythos-samp-mobile-v1.0.0
+          path: mythos-client/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+          retention-days: 30
