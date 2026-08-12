@@ -15,17 +15,20 @@ jobs:
     steps:
       - name: Checkout launcher repository
         uses: actions/checkout@v4
+
       - name: Checkout authorized SA-MP Mobile source
         uses: actions/checkout@v4
         with:
           repository: kuzia15/SAMP-Mobile
           ref: GTA-2.11
           path: mythos-client
+
       - name: Setup Java 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
+
       - name: Prepare MYTHØS client
         working-directory: mythos-client
         shell: bash
@@ -33,32 +36,73 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           import re
-          p = Path('app/build.gradle')
+
+          p = Path('app/build.gradle.kts')
           s = p.read_text()
-          s = s.replace("id 'com.google.gms.google-services'\n", '')
-          s = s.replace("id 'com.google.firebase.crashlytics'\n", '')
-          s = s.replace("namespace 'com.samp.mobile'", "namespace 'br.com.mythos.sampclient'")
-          s = s.replace('applicationId "com.samp.mobile"', 'applicationId "br.com.mythos.sampclient"')
-          s = s.replace('versionCode 105', 'versionCode 1')
-          s = s.replace('versionName "0.8.2.1"', 'versionName "1.0.0"')
-          s = s.replace('storeFile file("../../keys/new.jks")', 'storeFile file("mythos-release.keystore")')
-          s = s.replace('storePassword "123123"', 'storePassword "mythos123"')
-          s = s.replace('keyAlias "key0"', 'keyAlias "mythos"')
-          s = s.replace('keyPassword "123123"', 'keyPassword "mythos123"')
+          s = s.replace('applicationId = "com.gta.game"', 'applicationId = "br.com.mythos.sampclient"')
+          s = s.replace('versionName = "1.0.0"', 'versionName = "1.0.0"')
+
+          # Remove Firebase plugins/dependencies so the public build does not depend on
+          # the upstream Firebase configuration. Keep the original namespace because
+          # the Java/C++ source imports com.gta.game.R.
+          s = s.replace('    id("com.google.gms.google-services")\n', '')
+          s = s.replace('    id("com.google.firebase.crashlytics")\n', '')
           s = re.sub(r'\n\s*firebaseCrashlytics\s*\{.*?\n\s*\}', '', s, flags=re.S)
-          s = re.sub(r'^\s*implementation\s+\x27com\.google\.firebase:[^\n]+\n', '', s, flags=re.M)
-          s = re.sub(r'^\s*implementation\s+platform\(\x27com\.google\.firebase:[^\n]+\n', '', s, flags=re.M)
+          s = re.sub(r'^\s*implementation\("com\.google\.firebase:[^\n]+\)\n', '', s, flags=re.M)
+          s = re.sub(r'^\s*implementation\(platform\("com\.google\.firebase:[^\n]+\)\)\n', '', s, flags=re.M)
+
+          # Generate a normal signed release APK for the launcher.
+          marker = '    buildTypes {\n'
+          signing = '''    signingConfigs {\n        create("release") {\n            storeFile = file("mythos-release.keystore")\n            storePassword = "mythos123"\n            keyAlias = "mythos"\n            keyPassword = "mythos123"\n        }\n    }\n\n'''
+          if marker in s and 'create("release")' not in s:
+              s = s.replace(marker, signing + marker, 1)
+          s = s.replace('        release {\n', '        release {\n            signingConfig = signingConfigs.getByName("release")\n', 1)
           p.write_text(s)
+
+          keytool -genkeypair -v \
+            -keystore app/mythos-release.keystore \
+            -alias mythos -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass mythos123 -keypass mythos123 \
+            -dname "CN=MYTHOS NETWORK, OU=RP, O=MYTHOS NETWORK, L=BR, ST=SP, C=BR"
+
+          # Make the launcher background fill the complete ultrawide display.
+          # The old layout painted a fixed-size background, leaving a black strip.
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('app/src/main/res/layout/main_activity.xml')
+          s = p.read_text()
+          if '<FrameLayout' not in s:
+              s = s.replace(
+                  '<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"',
+                  '<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"', 1)
+              s = s.replace(
+                  '    android:background="@drawable/background"\n    android:padding="@dimen/margin_medium">',
+                  '    android:background="#000000">\n\n    <ImageView\n        android:layout_width="match_parent"\n        android:layout_height="match_parent"\n        android:src="@drawable/download_background"\n        android:scaleType="centerCrop"\n        android:contentDescription="@null" />\n\n    <RelativeLayout\n        android:layout_width="match_parent"\n        android:layout_height="match_parent"\n        android:padding="@dimen/margin_medium">', 1)
+              s = s.rsplit('</RelativeLayout>', 1)[0] + '    </RelativeLayout>\n</FrameLayout>\n'
+              p.write_text(s)
           PY
-          keytool -genkeypair -v -keystore app/mythos-release.keystore -alias mythos -keyalg RSA -keysize 2048 -validity 10000 -storepass mythos123 -keypass mythos123 -dname "CN=MYTHOS NETWORK, OU=RP, O=MYTHOS NETWORK, L=BR, ST=SP, C=BR"
+
           mkdir -p app/src/main/res/values
           printf '%s\n' '<resources><string name="app_name">MYTHØS SA-MP Mobile 2.11</string></resources>' > app/src/main/res/values/strings.xml
+
+          # Allow the launcher activity to use the whole landscape display.
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('app/src/main/AndroidManifest.xml')
+          s = p.read_text()
+          s = s.replace(
+              'android:theme="@style/Theme.AppCompat.Light.NoActionBar.FullScreen"\n            android:exported="true">',
+              'android:theme="@style/Theme.AppCompat.Light.NoActionBar.FullScreen"\n            android:resizeableActivity="true"\n            android:exported="true">', 1)
+          p.write_text(s)
+          PY
+
       - name: Build client APK
         working-directory: mythos-client
         run: |
           chmod +x gradlew
           ./gradlew assembleRelease --no-daemon --stacktrace
           cp app/build/outputs/apk/release/*.apk ../mythos-samp-mobile-2.11-v1.0.0.apk
+
       - name: Publish workflow artifact
         uses: actions/upload-artifact@v4
         with:
@@ -66,11 +110,12 @@ jobs:
           path: mythos-samp-mobile-2.11-v1.0.0.apk
           if-no-files-found: error
           retention-days: 30
+
       - name: Publish GitHub release asset
         uses: softprops/action-gh-release@v2
         with:
           tag_name: mythos-client-v1.0.0
           name: MYTHØS SA-MP Mobile 2.11 v1.0.0
-          body: MYTHØS SA-MP Mobile 2.11 client for the MYTHØS RP launcher.
+          body: MYTHØS SA-MP Mobile 2.11 client with ultrawide launcher background fix.
           files: mythos-samp-mobile-2.11-v1.0.0.apk
           make_latest: true
