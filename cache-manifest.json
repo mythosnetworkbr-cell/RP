@@ -1,0 +1,15 @@
+{
+  "name": "MYTHØS GTA Cache",
+  "version": "2026.08.12",
+  "platform": "android",
+  "installPath": "/storage/emulated/0/GTA/",
+  "sourceArchive": "MythosNetworkSAMP.zip",
+  "preparedArchive": "MythosNetworkSAMP-GTA.zip",
+  "preparedSha256": "d5ff7e1d58210ffd7e51f2f4cf954944db0ada4eddb441c3683d8077c52b3033",
+  "server": {
+    "host": "51.68.107.75",
+    "port": 10961
+  },
+  "status": "cache-prepared",
+  "notes": "The uploaded archive contains GTA/SA-MP game data, not an Android APK. The launcher extracts the prepared ZIP directly into /storage/emulated/0/GTA/."
+}
