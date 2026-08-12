@@ -23,7 +23,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Java 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
@@ -75,6 +75,14 @@ jobs:
           ANDROID_NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/26.2.11394342
         run: chmod +x gradlew && ./gradlew assembleRelease --no-daemon --stacktrace
 
+      - name: Verify client APK
+        run: |
+          set -e
+          APK="client/app/build/outputs/apk/release/app-release.apk"
+          test -s "$APK"
+          sha256sum "$APK"
+          ls -lh "$APK"
+
       - name: Publish client APK
         env:
           GH_TOKEN: ${{ github.token }}
@@ -82,7 +90,9 @@ jobs:
           set -e
           TAG="client-v0.8.2.1-${GITHUB_RUN_NUMBER}"
           cp client/app/build/outputs/apk/release/app-release.apk mythos-samp-mobile.apk
-          gh release create "$TAG" mythos-samp-mobile.apk --repo "$GITHUB_REPOSITORY" --title "MYTHØS SA-MP Mobile $TAG" --notes "Native SA-MP Mobile client built from the open-source GTA-2.10 branch of kuzia15/SAMP-Mobile. Mythos-specific Android package and samp:// intent integration."
+          SHA=$(sha256sum mythos-samp-mobile.apk | cut -d' ' -f1)
+          SIZE=$(stat -c%s mythos-samp-mobile.apk)
+          gh release create "$TAG" mythos-samp-mobile.apk --repo "$GITHUB_REPOSITORY" --title "MYTHØS SA-MP Mobile $TAG" --notes "Native SA-MP Mobile client built from the open-source GTA-2.10 branch of kuzia15/SAMP-Mobile. Mythos package, branding and samp:// integration."
           URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/mythos-samp-mobile.apk"
           python3 - <<PY
           import json
@@ -92,7 +102,7 @@ jobs:
           d['packageName']='br.com.mythos.sampclient'
           d['launchScheme']='samp'
           d['server']={'host':'51.68.107.75','port':10961}
-          d['artifact']={'type':'apk','url':'$URL','sha256':None,'size':None}
+          d['artifact']={'type':'apk','url':'$URL','sha256':'$SHA','size':int('$SIZE')}
           d['status']='published'
           d['notes']='MYTHØS SA-MP Mobile client build published by GitHub Actions.'
           open(p,'w').write(json.dumps(d,indent=2,ensure_ascii=False)+'\n')
@@ -106,6 +116,7 @@ jobs:
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: mythos-samp-mobile-apk
+          name: mythos-samp-mobile-apk-${{ github.run_number }}
           path: mythos-samp-mobile.apk
-          retention-days: 14
+          if-no-files-found: error
+          retention-days: 30
