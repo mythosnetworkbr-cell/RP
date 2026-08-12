@@ -6,6 +6,9 @@ on:
     paths:
       - '.github/workflows/build-mythos-client.yml'
 
+permissions:
+  contents: write
+
 jobs:
   build-client:
     runs-on: ubuntu-latest
@@ -55,10 +58,19 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew assembleRelease --no-daemon --stacktrace
-      - name: Publish client APK
+          cp app/build/outputs/apk/release/*.apk ../mythos-samp-mobile-2.11-v1.0.0.apk
+      - name: Publish workflow artifact
         uses: actions/upload-artifact@v4
         with:
           name: mythos-samp-mobile-2.11-v1.0.0
-          path: mythos-client/app/build/outputs/apk/release/*.apk
+          path: mythos-samp-mobile-2.11-v1.0.0.apk
           if-no-files-found: error
           retention-days: 30
+      - name: Publish GitHub release asset
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: mythos-client-v1.0.0
+          name: MYTHØS SA-MP Mobile 2.11 v1.0.0
+          body: MYTHØS SA-MP Mobile 2.11 client for the MYTHØS RP launcher.
+          files: mythos-samp-mobile-2.11-v1.0.0.apk
+          make_latest: true
