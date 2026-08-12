@@ -1,14 +1,23 @@
 name: MYTHØS RP Android APK
 
 on:
-  workflow_dispatch:
   push:
-    branches: [main]
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mythos-rp-android-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build-apk:
     name: Build Android APK
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -17,38 +26,33 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: '20.x'
-          package-manager-cache: false
+          cache: npm
 
-      - name: Verify Node.js
-        run: |
-          node --version
-          npm --version
-
-      - name: Install dependencies
-        run: npm install --no-audit --no-fund
-
-      - name: Setup Java
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Install latest Expo/EAS CLI
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Install latest EAS CLI
         run: npm install --global eas-cli@latest
 
-      - name: Validate Expo project
+      - name: Validate Expo configuration
         run: npx expo config --type public
 
-      - name: Link EAS project non-interactively
+      - name: Link and verify EAS project
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
           eas init --force --non-interactive
-          echo '--- app.json after EAS init ---'
+          echo '=== app.json ==='
           cat app.json
-          echo '--- EAS project info ---'
+          echo '=== EAS project ==='
           eas project:info --non-interactive
-          echo '--- EAS config ---'
+          echo '=== EAS config ==='
           eas config --platform android --profile preview --json --non-interactive
 
       - name: Build preview APK
@@ -60,5 +64,5 @@ jobs:
       - name: Build summary
         if: always()
         run: |
-          echo 'MYTHØS RP APK build finished.'
-          echo 'Check the EAS build URL above for the APK artifact.'
+          echo 'MYTHØS RP Android build finished.'
+          echo 'The EAS build URL above contains the APK artifact when successful.'
