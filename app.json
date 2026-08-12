@@ -2,12 +2,12 @@
   "expo": {
     "name": "MYTHØS RP",
     "slug": "mythos-rp-launcher",
-    "version": "0.3.0",
+    "version": "0.3.1",
     "orientation": "portrait",
     "owner": "mythosstudios-team",
     "android": {
       "package": "br.com.mythos.rp",
-      "versionCode": 3,
+      "versionCode": 4,
       "permissions": ["INTERNET"],
       "intentFilters": [
         {
