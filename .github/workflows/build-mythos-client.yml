@@ -40,24 +40,29 @@ jobs:
           p = Path('app/build.gradle.kts')
           s = p.read_text()
           s = s.replace('applicationId = "com.gta.game"', 'applicationId = "br.com.mythos.sampclient"')
-          s = s.replace('versionName = "1.0.0"', 'versionName = "1.0.0"')
-
-          # Remove Firebase plugins/dependencies so the public build does not depend on
-          # the upstream Firebase configuration. Keep the original namespace because
-          # the Java/C++ source imports com.gta.game.R.
           s = s.replace('    id("com.google.gms.google-services")\n', '')
           s = s.replace('    id("com.google.firebase.crashlytics")\n', '')
           s = re.sub(r'\n\s*firebaseCrashlytics\s*\{.*?\n\s*\}', '', s, flags=re.S)
           s = re.sub(r'^\s*implementation\("com\.google\.firebase:[^\n]+\)\n', '', s, flags=re.M)
           s = re.sub(r'^\s*implementation\(platform\("com\.google\.firebase:[^\n]+\)\)\n', '', s, flags=re.M)
 
-          # Generate a normal signed release APK for the launcher.
           marker = '    buildTypes {\n'
-          signing = '''    signingConfigs {\n        create("release") {\n            storeFile = file("mythos-release.keystore")\n            storePassword = "mythos123"\n            keyAlias = "mythos"\n            keyPassword = "mythos123"\n        }\n    }\n\n'''
+          signing = "\n".join([
+              '    signingConfigs {',
+              '        create("release") {',
+              '            storeFile = file("mythos-release.keystore")',
+              '            storePassword = "mythos123"',
+              '            keyAlias = "mythos"',
+              '            keyPassword = "mythos123"',
+              '        }',
+              '    }',
+              '',
+          ])
           if marker in s and 'create("release")' not in s:
               s = s.replace(marker, signing + marker, 1)
           s = s.replace('        release {\n', '        release {\n            signingConfig = signingConfigs.getByName("release")\n', 1)
           p.write_text(s)
+          PY
 
           keytool -genkeypair -v \
             -keystore app/mythos-release.keystore \
@@ -65,8 +70,7 @@ jobs:
             -storepass mythos123 -keypass mythos123 \
             -dname "CN=MYTHOS NETWORK, OU=RP, O=MYTHOS NETWORK, L=BR, ST=SP, C=BR"
 
-          # Make the launcher background fill the complete ultrawide display.
-          # The old layout painted a fixed-size background, leaving a black strip.
+          # Fix the launcher black strip on ultrawide landscape displays.
           python3 - <<'PY'
           from pathlib import Path
           p = Path('app/src/main/res/layout/main_activity.xml')
@@ -85,7 +89,6 @@ jobs:
           mkdir -p app/src/main/res/values
           printf '%s\n' '<resources><string name="app_name">MYTHØS SA-MP Mobile 2.11</string></resources>' > app/src/main/res/values/strings.xml
 
-          # Allow the launcher activity to use the whole landscape display.
           python3 - <<'PY'
           from pathlib import Path
           p = Path('app/src/main/AndroidManifest.xml')
