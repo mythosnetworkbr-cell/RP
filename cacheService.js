@@ -1,10 +1,12 @@
-import * as DocumentPicker from 'expo-document-picker';
 import * as LegacyFileSystem from 'expo-file-system/legacy';
 import * as IntentLauncher from 'expo-intent-launcher';
 import {unzip} from 'react-native-zip-archive';
 import {Platform} from 'react-native';
 
 export const GTA_DIR='/storage/emulated/0/GTA';
+export const CACHE_URL='https://easysend.co/6qfH7';
+const CACHE_FILE=`${LegacyFileSystem.cacheDirectory}mythos-gta-cache.zip`;
+const CACHE_MARKER=`${GTA_DIR}/.mythos-cache-ready`;
 
 async function requestGtaStorageAccess(){
   if(Platform.OS!=='android') throw new Error('CACHE_ANDROID_ONLY');
@@ -15,20 +17,35 @@ async function requestGtaStorageAccess(){
   }
 }
 
-export async function pickAndInstallGtaCache(){
+async function cacheAlreadyInstalled(){
+  try{
+    const info=await LegacyFileSystem.getInfoAsync(CACHE_MARKER);
+    return !!info.exists;
+  }catch{return false;}
+}
+
+export async function installBundledOrRemoteCache(){
   if(Platform.OS!=='android') throw new Error('CACHE_ANDROID_ONLY');
-  const picked=await DocumentPicker.getDocumentAsync({type:['application/zip','application/x-zip-compressed','application/octet-stream'],copyToCacheDirectory:true,multiple:false});
-  if(picked.canceled) return {cancelled:true};
-  const asset=picked.assets?.[0];
-  if(!asset?.uri) throw new Error('CACHE_FILE_NOT_SELECTED');
-  const localZip=`${LegacyFileSystem.cacheDirectory}mythos-gta-cache.zip`;
-  await LegacyFileSystem.copyAsync({from:asset.uri,to:localZip});
+  if(await cacheAlreadyInstalled()) return {installed:false,alreadyReady:true,path:GTA_DIR};
+
   await requestGtaStorageAccess();
   await LegacyFileSystem.makeDirectoryAsync(GTA_DIR,{intermediates:true}).catch(()=>{});
+
+  const download=await LegacyFileSystem.downloadAsync(CACHE_URL,CACHE_FILE);
+  if(download.status<200||download.status>=300) throw new Error(`CACHE_DOWNLOAD_HTTP_${download.status}`);
+
   try{
-    await unzip(localZip,GTA_DIR);
+    await unzip(download.uri,GTA_DIR);
+    await LegacyFileSystem.writeAsStringAsync(CACHE_MARKER,new Date().toISOString());
+  }catch(e){
+    throw new Error('CACHE_INVALID_OR_DOWNLOAD_LINK_NOT_DIRECT');
   }finally{
-    await LegacyFileSystem.deleteAsync(localZip,{idempotent:true}).catch(()=>{});
+    await LegacyFileSystem.deleteAsync(CACHE_FILE,{idempotent:true}).catch(()=>{});
   }
-  return {cancelled:false,path:GTA_DIR,name:asset.name||'cache.zip'};
+  return {installed:true,alreadyReady:false,path:GTA_DIR};
+}
+
+// Mantido para compatibilidade com versões antigas do launcher.
+export async function pickAndInstallGtaCache(){
+  return installBundledOrRemoteCache();
 }
