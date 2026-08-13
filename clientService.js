@@ -15,7 +15,11 @@ export async function downloadClient(onProgress){
   const url=manifest?.artifact?.url;
   if(!url) throw new Error('CLIENT_NOT_PUBLISHED');
   const directory=new Directory(Paths.document,'mythos-client');
-  directory.create({intermediates:true,overwrite:false});
+  try{
+    if(!directory.exists) directory.create({intermediates:true,idempotent:true});
+  }catch(error){
+    if(!directory.exists) throw error;
+  }
   const destination=new File(directory,`mythos-samp-${manifest.version}.apk`);
   const file=await File.downloadFileAsync(url,destination,{idempotent:true});
   onProgress?.(1);
