@@ -2,34 +2,18 @@
   "expo": {
     "name": "MYTHØS Launcher",
     "slug": "mythos-launcher",
-    "version": "2.4.1",
-    "orientation": "default",
-    "owner": "mythosstudios-team",
+    "version": "2.4.2",
+    "orientation": "landscape",
+    "userInterfaceStyle": "dark",
     "icon": "./assets/app-icon.png",
     "backgroundColor": "#030007",
     "primaryColor": "#9b2cff",
-    "splash": {
-      "image": "./assets/app-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#030007"
-    },
+    "splash": {"image":"./assets/app-icon.png","resizeMode":"contain","backgroundColor":"#030007"},
     "android": {
       "package": "br.com.mythos.rp",
-      "versionCode": 15,
-      "permissions": [
-        "INTERNET",
-        "REQUEST_INSTALL_PACKAGES",
-        "MANAGE_EXTERNAL_STORAGE",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE"
-      ],
-      "intentFilters": [
-        {
-          "action": "VIEW",
-          "category": ["BROWSABLE", "DEFAULT"],
-          "data": [{"scheme": "samp"}]
-        }
-      ]
+      "versionCode": 16,
+      "permissions": ["INTERNET","REQUEST_INSTALL_PACKAGES"],
+      "intentFilters": [{"action":"VIEW","category":["BROWSABLE","DEFAULT"],"data":[{"scheme":"samp"}]}]
     },
     "updates": {"fallbackToCacheTimeout": 0}
   }
