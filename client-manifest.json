@@ -1,20 +1,17 @@
 {
   "name": "MYTHØS SA-MP Mobile",
-  "version": "1.0.0",
+  "version": "2.11",
   "platform": "android",
   "architecture": ["arm64-v8a", "armeabi-v7a"],
   "packageName": "br.com.mythos.sampclient",
   "launchScheme": "samp",
-  "server": {
-    "host": "51.68.107.75",
-    "port": 10961
-  },
+  "server": {"host": "51.68.107.75", "port": 10961},
   "artifact": {
     "type": "apk",
-    "url": "https://github.com/mythosnetworkbr-cell/RP/releases/download/mythos-client-v1.0.0/mythos-samp-mobile-2.11-v1.0.0.apk",
+    "url": "https://www.mediafire.com/file/bi0t2se2eiigtnj/MythosNetworkSAMP-debug.apk/file",
     "sha256": null,
     "size": null
   },
-  "status": "build-and-publish-on-push",
-  "notes": "The Android launcher downloads the signed client from the GitHub release created by the client build workflow."
+  "status": "automatic-download",
+  "notes": "The launcher resolves the MediaFire download page automatically, downloads the APK, opens Android's installer, and then retries the samp:// server launch when the user returns."
 }
