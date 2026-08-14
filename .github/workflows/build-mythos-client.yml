@@ -37,6 +37,14 @@ jobs:
         run: |
           set -euo pipefail
           unzip -o app/src/main/cpp/cpp.zip -d app/src/main/cpp
+
+          # The upstream archive contains playertablist.h, while one or more
+          # C++ includes use the Windows-style PlayerTabList.h spelling.
+          # Linux runners are case-sensitive, so normalize the header name.
+          if [ -f app/src/main/cpp/samp_widgets/playertablist.h ] && [ ! -f app/src/main/cpp/samp_widgets/playerTabList.h ]; then
+            cp app/src/main/cpp/samp_widgets/playertablist.h app/src/main/cpp/samp_widgets/playerTabList.h
+          fi
+
           python3 - <<'PY'
           from pathlib import Path
           import re
