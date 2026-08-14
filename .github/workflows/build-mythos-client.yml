@@ -5,6 +5,7 @@ on:
   push:
     paths:
       - '.github/workflows/build-mythos-client.yml'
+      - 'client-manifest.json'
 
 permissions:
   contents: write
@@ -16,7 +17,7 @@ jobs:
       - name: Checkout launcher repository
         uses: actions/checkout@v4
 
-      - name: Checkout authorized SA-MP Mobile source
+      - name: Checkout open-source SA-MP Mobile 2.11 source
         uses: actions/checkout@v4
         with:
           repository: kuzia15/SAMP-Mobile
@@ -28,95 +29,47 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+          cache: gradle
 
-      - name: Prepare MYTHØS client
+      - name: Prepare client source
         working-directory: mythos-client
         shell: bash
         run: |
-          # The upstream branch stores part of the native SA-MP source in cpp.zip.
-          # Extract it before CMake so headers such as samp_widgets/playerTabList.h exist.
+          set -euo pipefail
           unzip -o app/src/main/cpp/cpp.zip -d app/src/main/cpp
-
           python3 - <<'PY'
           from pathlib import Path
           import re
-
-          # The upstream build still declares the retired Splunk Mint Maven
-          # repository. Remove it so Gradle can resolve dependencies via
-          # Maven Central/JitPack without contacting mint.splunk.com.
           root = Path('build.gradle.kts')
-          rs = root.read_text()
-          rs = rs.replace('        maven { url = uri("https://mint.splunk.com/gradle/") }\n', '')
-          root.write_text(rs)
-
-          p = Path('app/build.gradle.kts')
-          s = p.read_text()
-          s = s.replace('applicationId = "com.gta.game"', 'applicationId = "br.com.mythos.sampclient"')
-          s = s.replace('    id("com.google.gms.google-services")\n', '')
-          s = s.replace('    id("com.google.firebase.crashlytics")\n', '')
-          s = re.sub(r'\n\s*firebaseCrashlytics\s*\{.*?\n\s*\}', '', s, flags=re.S)
-          s = re.sub(r'^\s*implementation\("com\.google\.firebase:[^\n]+\)\n', '', s, flags=re.M)
-          s = re.sub(r'^\s*implementation\(platform\("com\.google\.firebase:[^\n]+\)\)\n', '', s, flags=re.M)
-
-          marker = '    buildTypes {\n'
-          signing = "\n".join([
-              '    signingConfigs {',
-              '        create("release") {',
-              '            storeFile = file("mythos-release.keystore")',
-              '            storePassword = "mythos123"',
-              '            keyAlias = "mythos"',
-              '            keyPassword = "mythos123"',
-              '        }',
-              '    }',
-              '',
-          ])
-          if marker in s and 'create("release")' not in s:
-              s = s.replace(marker, signing + marker, 1)
-          s = s.replace('        release {\n', '        release {\n            signingConfig = signingConfigs.getByName("release")\n', 1)
-          p.write_text(s)
-          PY
-
-          keytool -genkeypair -v \
-            -keystore app/mythos-release.keystore \
-            -alias mythos -keyalg RSA -keysize 2048 -validity 10000 \
-            -storepass mythos123 -keypass mythos123 \
-            -dname "CN=MYTHOS NETWORK, OU=RP, O=MYTHOS NETWORK, L=BR, ST=SP, C=BR"
-
-          # Fix the launcher black strip on ultrawide landscape displays.
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path('app/src/main/res/layout/main_activity.xml')
-          s = p.read_text()
-          if '<FrameLayout' not in s:
-              s = s.replace(
-                  '<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"',
-                  '<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"', 1)
-              s = s.replace(
-                  '    android:background="@drawable/background"\n    android:padding="@dimen/margin_medium">',
-                  '    android:background="#000000">\n\n    <ImageView\n        android:layout_width="match_parent"\n        android:layout_height="match_parent"\n        android:src="@drawable/download_background"\n        android:scaleType="centerCrop"\n        android:contentDescription="@null" />\n\n    <RelativeLayout\n        android:layout_width="match_parent"\n        android:layout_height="match_parent"\n        android:padding="@dimen/margin_medium">', 1)
-              s = s.rsplit('</RelativeLayout>', 1)[0] + '    </RelativeLayout>\n</FrameLayout>\n'
-              p.write_text(s)
-          PY
-
-          mkdir -p app/src/main/res/values
-          printf '%s\n' '<resources><string name="app_name">MYTHØS SA-MP Mobile 2.11</string></resources>' > app/src/main/res/values/strings.xml
-
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path('app/src/main/AndroidManifest.xml')
-          s = p.read_text()
-          s = s.replace(
-              'android:theme="@style/Theme.AppCompat.Light.NoActionBar.FullScreen"\n            android:exported="true">',
-              'android:theme="@style/Theme.AppCompat.Light.NoActionBar.FullScreen"\n            android:resizeableActivity="true"\n            android:exported="true">', 1)
-          p.write_text(s)
+          text = root.read_text()
+          text = text.replace('        maven { url = uri("https://mint.splunk.com/gradle/") }\n', '')
+          root.write_text(text)
+          app = Path('app/build.gradle.kts')
+          text = app.read_text()
+          text = text.replace('applicationId = "com.gta.game"', 'applicationId = "br.com.mythos.sampclient"')
+          text = text.replace('    id("com.google.gms.google-services")\n', '')
+          text = text.replace('    id("com.google.firebase.crashlytics")\n', '')
+          text = re.sub(r'\n\s*firebaseCrashlytics\s*\{.*?\n\s*\}', '', text, flags=re.S)
+          text = re.sub(r'^\s*implementation\("com\.google\.firebase:[^\n]+\)\n', '', text, flags=re.M)
+          text = re.sub(r'^\s*implementation\(platform\("com\.google\.firebase:[^\n]+\)\)\n', '', text, flags=re.M)
+          app.write_text(text)
           PY
 
       - name: Build client APK
         working-directory: mythos-client
         run: |
+          set -euo pipefail
           chmod +x gradlew
           ./gradlew assembleRelease --no-daemon --stacktrace
-          cp app/build/outputs/apk/release/*.apk ../mythos-samp-mobile-2.11-v1.0.0.apk
+          APK=$(find app/build/outputs/apk/release -maxdepth 1 -type f -name '*.apk' | head -n 1)
+          test -n "$APK"
+          cp "$APK" ../mythos-samp-mobile-2.11-v1.0.0.apk
+
+      - name: Verify APK
+        run: |
+          set -euo pipefail
+          test -s mythos-samp-mobile-2.11-v1.0.0.apk
+          sha256sum mythos-samp-mobile-2.11-v1.0.0.apk
 
       - name: Publish workflow artifact
         uses: actions/upload-artifact@v4
@@ -131,6 +84,6 @@ jobs:
         with:
           tag_name: mythos-client-v1.0.0
           name: MYTHØS SA-MP Mobile 2.11 v1.0.0
-          body: MYTHØS SA-MMP Mobile 2.11 client with ultrawide launcher background fix.
+          body: Built from the public SAMP-Mobile GTA-2.11 source for the MYTHØS project.
           files: mythos-samp-mobile-2.11-v1.0.0.apk
-          make_latest: true
+          make_latest: false
