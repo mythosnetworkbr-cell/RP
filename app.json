@@ -2,27 +2,14 @@
   "expo": {
     "name": "MYTHØS Launcher",
     "slug": "mythos-launcher",
-    "version": "2.0.0",
-    "orientation": "portrait",
-    "owner": "mythosstudios-team",
-    "icon": "./assets/logo.jpg",
+    "version": "2.3.0",
+    "orientation": "landscape",
+    "userInterfaceStyle": "dark",
     "android": {
       "package": "br.com.mythos.rp",
-      "versionCode": 10,
-      "permissions": [
-        "INTERNET",
-        "REQUEST_INSTALL_PACKAGES",
-        "MANAGE_EXTERNAL_STORAGE",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE"
-      ],
-      "intentFilters": [
-        {
-          "action": "VIEW",
-          "category": ["BROWSABLE", "DEFAULT"],
-          "data": [{"scheme": "samp"}]
-        }
-      ]
+      "versionCode": 13,
+      "permissions": ["INTERNET", "REQUEST_INSTALL_PACKAGES"],
+      "intentFilters": [{"action":"VIEW","category":["BROWSABLE","DEFAULT"],"data":[{"scheme":"samp"}]}]
     },
     "plugins": [],
     "updates": {"fallbackToCacheTimeout": 0}
