@@ -1,31 +1,22 @@
 {
   "name": "mythos-rp-launcher",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "private": true,
-  "scripts": {
-    "start": "expo start",
-    "android": "expo run:android",
-    "web": "expo start --web"
-  },
+  "scripts": {"start":"expo start","android":"expo run:android","web":"expo start --web"},
   "dependencies": {
-    "@react-navigation/native": "^7.1.17",
-    "@react-navigation/native-stack": "^7.3.25",
-    "expo": "~54.0.0",
-    "expo-audio": "~1.1.1",
-    "expo-document-picker": "~14.0.8",
-    "expo-file-system": "~19.0.23",
-    "expo-image": "~3.0.0",
-    "expo-intent-launcher": "~13.0.8",
-    "expo-linear-gradient": "~15.0.8",
-    "expo-status-bar": "~3.0.8",
-    "react": "19.1.0",
-    "react-native": "0.81.4",
-    "react-native-safe-area-context": "~5.6.0",
-    "react-native-screens": "~4.16.0",
-    "react-native-zip-archive": "^7.0.2"
+    "@react-navigation/native":"^7.1.17",
+    "@react-navigation/native-stack":"^7.3.25",
+    "expo":"~54.0.0",
+    "expo-document-picker":"~14.0.8",
+    "expo-file-system":"~19.0.23",
+    "expo-intent-launcher":"~13.0.8",
+    "expo-linear-gradient":"~15.0.8",
+    "expo-status-bar":"~3.0.8",
+    "react":"19.1.0",
+    "react-native":"0.81.4",
+    "react-native-safe-area-context":"~5.6.0",
+    "react-native-screens":"~4.16.0",
+    "react-native-zip-archive":"^7.0.2"
   },
-  "devDependencies": {
-    "@types/react": "~19.1.10",
-    "typescript": "~5.9.2"
-  }
+  "devDependencies":{"@types/react":"~19.1.10","typescript":"~5.9.2"}
 }
