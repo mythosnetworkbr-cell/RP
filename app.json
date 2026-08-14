@@ -2,7 +2,7 @@
   "expo": {
     "name": "MYTHØS Launcher",
     "slug": "mythos-launcher",
-    "version": "2.4.0",
+    "version": "2.4.1",
     "orientation": "default",
     "owner": "mythosstudios-team",
     "icon": "./assets/app-icon.png",
@@ -15,7 +15,7 @@
     },
     "android": {
       "package": "br.com.mythos.rp",
-      "versionCode": 14,
+      "versionCode": 15,
       "permissions": [
         "INTERNET",
         "REQUEST_INSTALL_PACKAGES",
@@ -31,9 +31,6 @@
         }
       ]
     },
-    "plugins": [
-      ["expo-audio", {"recordAudioAndroid": false}]
-    ],
     "updates": {"fallbackToCacheTimeout": 0}
   }
 }
