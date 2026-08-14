@@ -1,6 +1,6 @@
 {
   "name": "mythos-rp-launcher",
-  "version": "2.4.2",
+  "version": "2.5.0",
   "private": true,
   "scripts": {"start":"expo start","android":"expo run:android","web":"expo start --web"},
   "dependencies": {
@@ -12,5 +12,5 @@
     "react":"19.1.0",
     "react-native":"0.81.4"
   },
-  "devDependencies": {"@types/react":"~19.1.10","typescript":"~5.9.2"}
+  "devDependencies": {"@types/react":"~19.1.10","typescript":"~5.9.2","sharp":"^0.34.3"}
 }
