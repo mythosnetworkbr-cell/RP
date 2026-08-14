@@ -1,17 +1,8 @@
 {
-  "name": "MYTHØS SA-MP Mobile",
   "version": "2.11",
-  "platform": "android",
-  "architecture": ["arm64-v8a", "armeabi-v7a"],
+  "name": "MYTHØS SA-MP Mobile 2.11",
   "packageName": "br.com.mythos.sampclient",
-  "launchScheme": "samp",
+  "downloadUrl": "https://github.com/mythosnetworkbr-cell/RP/releases/download/mythos-client-v1.0.0/mythos-samp-mobile-2.11-v1.0.0.apk",
   "server": {"host": "51.68.107.75", "port": 10961},
-  "artifact": {
-    "type": "apk",
-    "url": "https://www.mediafire.com/file/bi0t2se2eiigtnj/MythosNetworkSAMP-debug.apk/file",
-    "sha256": null,
-    "size": null
-  },
-  "status": "automatic-download",
-  "notes": "The launcher resolves the MediaFire download page automatically, downloads the APK, opens Android's installer, and then retries the samp:// server launch when the user returns."
+  "cachePath": "/storage/emulated/0/GTA/"
 }
