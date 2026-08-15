@@ -6,6 +6,7 @@ import {Linking} from 'react-native';
 export const CLIENT_URL='https://github.com/mythosnetworkbr-cell/RP/releases/download/mythos-client-v1.0.0/mythos-samp-mobile-2.11-v1.0.0.apk';
 export const CLIENT_PACKAGE='br.com.mythos.sampclient';
 export const SERVER_URI='samp://51.68.107.75:10961';
+let selectedServerUri=SERVER_URI;
 
 async function downloadToLocal(onProgress){
   const directory=new Directory(Paths.document,'mythos-client');
@@ -27,7 +28,8 @@ async function openInstalledClient(){
   }catch{return false}
 }
 
-export async function prepareClient(onProgress){
+export async function prepareClient(onProgress,serverUri=SERVER_URI){
+  selectedServerUri=serverUri||SERVER_URI;
   const installed=await openInstalledClient();
   if(installed) return {installed:true,alreadyInstalled:true};
 
@@ -41,7 +43,8 @@ export async function prepareClient(onProgress){
   return {installed:false,awaitingAndroidInstaller:true};
 }
 
-export async function launchClient(){
+export async function launchClient(serverUri=selectedServerUri){
+  selectedServerUri=serverUri||selectedServerUri||SERVER_URI;
   if(await openInstalledClient()) return true;
-  try{return await Linking.openURL(SERVER_URI)}catch{return false}
+  try{return await Linking.openURL(selectedServerUri)}catch{return false}
 }
