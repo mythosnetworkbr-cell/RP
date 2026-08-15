@@ -41,9 +41,20 @@ jobs:
           file nyx_build/gamemodes/nyx.amx
           ls -lh nyx_build/gamemodes/nyx.amx
 
-      - name: Upload NYX AMX
+      - name: Assemble NYX server package
+        run: |
+          mkdir -p release/gamemodes
+          cp nyx_build/gamemodes/nyx.amx release/gamemodes/nyx.amx
+          cp nyx_build/server.cfg release/server.cfg
+          test -s release/gamemodes/nyx.amx
+          grep -q '^gamemode0 nyx 1$' release/server.cfg
+          grep -q '^port 10961$' release/server.cfg
+          cd release
+          zip -r ../nyx-roleplay-server.zip .
+
+      - name: Upload NYX server package
         uses: actions/upload-artifact@v4
         with:
-          name: nyx-gamemode
-          path: nyx_build/gamemodes/nyx.amx
+          name: nyx-roleplay-server
+          path: nyx-roleplay-server.zip
           if-no-files-found: error
