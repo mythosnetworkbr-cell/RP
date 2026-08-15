@@ -38,10 +38,6 @@ jobs:
           set -euo pipefail
           unzip -o app/src/main/cpp/cpp.zip -d app/src/main/cpp
 
-          if [ -f app/src/main/cpp/samp_widgets/playertablist.h ] && [ ! -f app/src/main/cpp/samp_widgets/playerTabList.h ]; then
-            cp app/src/main/cpp/samp_widgets/playertablist.h app/src/main/cpp/samp_widgets/playerTabList.h
-          fi
-
           python3 - <<'PY'
           from pathlib import Path
           import re
@@ -49,6 +45,7 @@ jobs:
           text = root.read_text()
           text = text.replace('        maven { url = uri("https://mint.splunk.com/gradle/") }\n', '')
           root.write_text(text)
+
           app = Path('app/build.gradle.kts')
           text = app.read_text()
           text = text.replace('applicationId = "com.gta.game"', 'applicationId = "br.com.mythos.sampclient"')
@@ -60,6 +57,21 @@ jobs:
           text = re.sub(r'^\s*implementation\("com\.google\.firebase:[^\n]+\)\n', '', text, flags=re.M)
           text = re.sub(r'^\s*implementation\(platform\("com\.google\.firebase:[^\n]+\)\)\n', '', text, flags=re.M)
           app.write_text(text)
+
+          # The GTA-2.11 source branch references PlayerTabList but does not ship that header.
+          # It is an optional scoreboard widget, so disable only that missing widget and keep
+          # keyboard/chat/dialog support intact.
+          gui = Path('app/src/main/cpp/samp/gui/gui.h')
+          g = gui.read_text()
+          g = g.replace('#include "samp_widgets/playerTabList.h"\n', '')
+          g = g.replace('    PlayerTabList* playertablist() const { return m_playerTabList; }\n', '    void* playertablist() const { return nullptr; }\n')
+          g = g.replace('    PlayerTabList* m_playerTabList;\n', '')
+          gui.write_text(g)
+
+          cpp = Path('app/src/main/cpp/samp/gui/gui.cpp')
+          c = cpp.read_text()
+          c = re.sub(r'\n\s*m_playerTabList = new PlayerTabList\(\);\n\s*this->addChild\(m_playerTabList\);\n\s*m_playerTabList->setMinSize\(UISettings::dialogMinSize\(\)\);\n\s*m_playerTabList->setMaxSize\(UISettings::dialogMaxSize\(\)\);\n\s*m_playerTabList->setVisible\(false\);\n', '\n', c)
+          cpp.write_text(c)
 
           manifest = Path('app/src/main/AndroidManifest.xml')
           m = manifest.read_text()
