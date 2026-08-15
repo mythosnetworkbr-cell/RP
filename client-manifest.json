@@ -1,8 +1,9 @@
 {
-  "version": "2.11.1",
-  "name": "MYTHØS SA-MP Mobile 2.11",
+  "version": "2.10.1",
+  "name": "MYTHØS SA-MP Mobile 2.10",
   "packageName": "br.com.mythos.sampclient",
-  "downloadUrl": "https://github.com/mythosnetworkbr-cell/RP/releases/download/mythos-client-v1.0.1/mythos-samp-mobile-2.11-v1.0.1.apk",
+  "downloadUrl": "https://github.com/mythosnetworkbr-cell/RP/releases/download/mythos-client-v2.10.1/mythos-samp-mobile-2.10-v2.10.1.apk",
   "server": {"host": "51.68.107.75", "port": 10961},
-  "cachePath": "/storage/emulated/0/GTA/"
+  "cachePath": "/storage/emulated/0/GTA/",
+  "requiresGtaVersion": "2.10"
 }
