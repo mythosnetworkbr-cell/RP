@@ -32,7 +32,7 @@ jobs:
           COMPILER=$(find ../../pawnc -type f -name pawncc | head -1)
           test -n "$COMPILER"
           chmod +x "$COMPILER"
-          "$COMPILER" nyx.pwn -i../include -;+ -(+ -Z- -d0 -O2 -t4 -o:nyx
+          "$COMPILER" "nyx.pwn" "-i../include" "-;+" "-(+" "-Z-" "-d0" "-O2" "-t4" "-o:nyx"
 
       - name: Verify AMX
         run: |
