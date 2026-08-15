@@ -17,59 +17,62 @@ jobs:
       - name: Checkout launcher repository
         uses: actions/checkout@v4
 
-      - name: Checkout open-source SA-MP Mobile 2.11 source
+      - name: Clone stable SA-MP Mobile client
         uses: actions/checkout@v4
         with:
-          repository: kuzia15/SAMP-Mobile
-          ref: GTA-2.11
+          repository: noobcooder-sys/SA-MP-Mobile-Client-GTA-SA-2.10-
+          ref: main
           path: mythos-client
 
-      - name: Setup Java 17
+      - name: Setup Java 21
         uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
           cache: gradle
 
-      - name: Prepare client source
+      - name: Setup Android SDK and NDK 28
+        uses: android-actions/setup-android@v3
+
+      - name: Install NDK 28
+        run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0' 'ndk;28.0.13004108'
+
+      - name: Prepare client source for MYTHØS
         working-directory: mythos-client
         shell: bash
         run: |
           set -euo pipefail
-          unzip -o app/src/main/cpp/cpp.zip -d app/src/main/cpp
-
           python3 - <<'PY'
           from pathlib import Path
           import re
-          root = Path('build.gradle.kts')
-          text = root.read_text()
-          text = text.replace('        maven { url = uri("https://mint.splunk.com/gradle/") }\n', '')
-          root.write_text(text)
-
-          app = Path('app/build.gradle.kts')
-          text = app.read_text()
-          text = text.replace('applicationId = "com.gta.game"', 'applicationId = "br.com.mythos.sampclient"')
-          text = re.sub(r'versionCode = \d+', 'versionCode = 2', text)
-          text = re.sub(r'versionName = "[^"]+"', 'versionName = "1.0.1"', text)
-          text = text.replace('    id("com.google.gms.google-services")\n', '')
-          text = text.replace('    id("com.google.firebase.crashlytics")\n', '')
-          text = re.sub(r'\n\s*firebaseCrashlytics\s*\{.*?\n\s*\}', '', text, flags=re.S)
-          text = re.sub(r'^\s*implementation\("com\.google\.firebase:[^\n]+\)\n', '', text, flags=re.M)
-          text = re.sub(r'^\s*implementation\(platform\("com\.google\.firebase:[^\n]+\)\)\n', '', text, flags=re.M)
+          app=Path('app/build.gradle')
+          text=app.read_text()
+          text=text.replace("id 'com.google.gms.google-services'\n", '')
+          text=text.replace("id 'com.google.firebase.crashlytics'\n", '')
+          text=re.sub(r'\s*fabricCrashlytics\s*\{.*?\n\s*\}', '', text, flags=re.S)
+          text=re.sub(r'\s*firebaseCrashlytics\s*\{.*?\n\s*\}', '', text, flags=re.S)
+          text=re.sub(r'^\s*implementation platform\("com\.google\.firebase:[^\n]+\)\n', '', text, flags=re.M)
+          text=re.sub(r'^\s*implementation [\'\"]com\.google\.firebase:[^\n]+\n', '', text, flags=re.M)
+          text=text.replace('applicationId "com.russia.game"','applicationId "br.com.mythos.sampclient"')
+          text=text.replace('namespace \'com.russia.game\'','namespace \'br.com.mythos.sampclient\'')
+          text=text.replace('versionName "1000 beta"','versionName "2.10.1"')
+          text=re.sub(r'versionCode \d+','versionCode 2101',text)
           app.write_text(text)
 
-          # Keep the PlayerTabList widget from the GTA-2.11 source intact.
-          # Fix the only case-sensitive header mismatch exposed by Linux builds.
-          rgba = Path('app/src/main/cpp/samp/game/rgba.h')
-          RGBA = Path('app/src/main/cpp/samp/game/RGBA.h')
-          if rgba.exists() and not RGBA.exists():
-              RGBA.write_bytes(rgba.read_bytes())
+          root=Path('build.gradle.kts')
+          if root.exists():
+              t=root.read_text()
+              t=re.sub(r'\n\s*classpath\("com\.google\.gms:google-services:[^\n]+\)', '', t)
+              t=re.sub(r'\n\s*classpath\("com\.google\.firebase:firebase-crashlytics-gradle:[^\n]+\)', '', t)
+              root.write_text(t)
 
-          manifest = Path('app/src/main/AndroidManifest.xml')
-          m = manifest.read_text()
-          marker = '<intent-filter>\n                <action android:name="android.intent.action.MAIN" />'
-          if marker in m and 'android.intent.action.VIEW' not in m:
-              m = m.replace(marker, '<intent-filter>\n                <action android:name="android.intent.action.VIEW" />\n                <category android:name="android.intent.category.DEFAULT" />\n                <category android:name="android.intent.category.BROWSABLE" />\n                <data android:scheme="samp" />\n            </intent-filter>\n            ' + marker, 1)
+          manifest=Path('app/src/main/AndroidManifest.xml')
+          m=manifest.read_text()
+          m=m.replace('android:screenOrientation="landscape"','android:screenOrientation="landscape"',1)
+          marker='''            <intent-filter>\n                <action android:name="android.intent.action.MAIN" />\n                <category android:name="android.intent.category.LAUNCHER" />\n            </intent-filter>'''
+          samp='''            <intent-filter>\n                <action android:name="android.intent.action.VIEW" />\n                <category android:name="android.intent.category.DEFAULT" />\n                <category android:name="android.intent.category.BROWSABLE" />\n                <data android:scheme="samp" />\n            </intent-filter>\n'''
+          if marker in m and 'android:scheme="samp"' not in m:
+              m=m.replace(marker,samp+marker,1)
           manifest.write_text(m)
           PY
 
@@ -78,30 +81,31 @@ jobs:
         run: |
           set -euo pipefail
           chmod +x gradlew
-          ./gradlew assembleRelease --no-daemon --stacktrace
-          APK=$(find app/build/outputs/apk/release -maxdepth 1 -type f -name '*.apk' | head -n 1)
+          ./gradlew assembleVer_releaseRelease --no-daemon --stacktrace
+          APK=$(find app/build/outputs/apk -type f -name '*.apk' | head -n 1)
           test -n "$APK"
-          cp "$APK" ../mythos-samp-mobile-2.11-v1.0.1.apk
+          cp "$APK" ../mythos-samp-mobile-2.10-v2.10.1.apk
 
       - name: Verify APK
         run: |
           set -euo pipefail
-          test -s mythos-samp-mobile-2.11-v1.0.1.apk
-          sha256sum mythos-samp-mobile-2.11-v1.0.1.apk
+          test -s mythos-samp-mobile-2.10-v2.10.1.apk
+          sha256sum mythos-samp-mobile-2.10-v2.10.1.apk
+          ls -lh mythos-samp-mobile-2.10-v2.10.1.apk
 
       - name: Publish workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: mythos-samp-mobile-2.11-v1.0.1
-          path: mythos-samp-mobile-2.11-v1.0.1.apk
+          name: mythos-samp-mobile-2.10-v2.10.1
+          path: mythos-samp-mobile-2.10-v2.10.1.apk
           if-no-files-found: error
           retention-days: 30
 
       - name: Publish GitHub release asset
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: mythos-client-v1.0.1
-          name: MYTHØS SA-MP Mobile 2.11 v1.0.1
-          body: Built from the public SAMP-Mobile GTA-2.11 source for the MYTHØS project. This release intentionally bumps the Android version so the launcher updates an older installed client.
-          files: mythos-samp-mobile-2.11-v1.0.1.apk
+          tag_name: mythos-client-v2.10.1
+          name: MYTHØS SA-MP Mobile 2.10.1
+          body: Stable SA-MP Mobile 2.10 base cloned from noobcooder-sys/SA-MP-Mobile-Client-GTA-SA-2.10- and packaged for MYTHØS. Requires GTA SA 2.10 cache.
+          files: mythos-samp-mobile-2.10-v2.10.1.apk
           make_latest: false
