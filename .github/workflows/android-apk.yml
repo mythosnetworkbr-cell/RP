@@ -30,6 +30,14 @@ jobs:
         uses: android-actions/setup-android@v3
       - name: Install client Android SDK
         run: sdkmanager 'platform-tools' 'platforms;android-36' 'build-tools;36.0.0' 'ndk;26.2.11394342' 'cmake;3.22.1'
+      - name: Fix case-sensitive SA-MP widget include
+        working-directory: client-src
+        run: |
+          set -e
+          HEADER='app/src/main/cpp/samp/gui/samp_widgets/playertablist.h'
+          test -f "$HEADER"
+          sed -i 's#samp_widgets/playerTabList\.h#samp_widgets/playertablist.h#g' app/src/main/cpp/samp/gui/gui.h
+          grep -F '#include "samp_widgets/playertablist.h"' app/src/main/cpp/samp/gui/gui.h
       - name: Build SA-MP 2.11 release APK
         working-directory: client-src
         run: chmod +x gradlew && ./gradlew assembleRelease --no-daemon --stacktrace
