@@ -1,0 +1,46 @@
+name: Build NYX GameMode
+
+on:
+  push:
+    paths:
+      - 'nyx_build/**'
+      - '.github/workflows/build-nyx-gamemode.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download Pawn compiler
+        run: |
+          curl -L --fail -o pawnc.tar.gz https://github.com/openmultiplayer/compiler/releases/download/v3.10.11/pawnc-3.10.11-linux.tar.gz
+          mkdir -p pawnc
+          tar -xzf pawnc.tar.gz -C pawnc
+          chmod +x pawnc/pawncc
+
+      - name: Get SA-MP includes
+        run: |
+          git clone --depth 1 https://github.com/openmultiplayer/omp-stdlib.git omp-stdlib
+          mkdir -p nyx_build/include
+          cp omp-stdlib/include/*.inc nyx_build/include/
+
+      - name: Compile NYX
+        working-directory: nyx_build/gamemodes
+        run: |
+          ../../pawnc/pawncc nyx.pwn -i../include -;+ -(+ -Z- -d0 -O2 -t4 -o:nyx
+
+      - name: Verify AMX
+        run: |
+          test -s nyx_build/gamemodes/nyx.amx
+          file nyx_build/gamemodes/nyx.amx
+          ls -lh nyx_build/gamemodes/nyx.amx
+
+      - name: Upload NYX AMX
+        uses: actions/upload-artifact@v4
+        with:
+          name: nyx-gamemode
+          path: nyx_build/gamemodes/nyx.amx
+          if-no-files-found: error
