@@ -7,15 +7,60 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: mythos-rp-android-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build-apk:
-    name: Build Android APK
+  build-client:
+    name: Build SA-MP 2.11 Client
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout client source
+        run: git clone --depth 1 --branch GTA-2.11 https://github.com/kuzia15/SAMP-Mobile.git client-src
+      - name: Setup Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Install client Android SDK
+        run: sdkmanager 'platform-tools' 'platforms;android-36' 'build-tools;36.0.0' 'ndk;26.2.11394342' 'cmake;3.22.1'
+      - name: Build SA-MP 2.11 release APK
+        working-directory: client-src
+        run: chmod +x gradlew && ./gradlew assembleRelease --no-daemon --stacktrace
+      - name: Verify client APK
+        run: |
+          set -e
+          APK="client-src/app/build/outputs/apk/release/GTA-2.11-release.apk"
+          test -s "$APK"
+          sha256sum "$APK"
+          ls -lh "$APK"
+      - name: Replace stable client release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          gh release delete client-2.11 --yes --cleanup-tag || true
+          gh release create client-2.11 \
+            --title 'MYTHØS SA-MP 2.11 Client' \
+            --notes 'SA-MP 2.11 ARM64 client built from the public GTA-2.11 source. Cache path: /storage/emulated/0/GTA/' \
+            client-src/app/build/outputs/apk/release/GTA-2.11-release.apk
+      - name: Upload client artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mythos-samp-client-2.11-${{ github.run_number }}
+          path: client-src/app/build/outputs/apk/release/GTA-2.11-release.apk
+          if-no-files-found: error
+          retention-days: 30
+
+  build-launcher:
+    name: Build MYTHØS Launcher
+    needs: build-client
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -32,7 +77,7 @@ jobs:
           java-version: '17'
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
-      - name: Install Android SDK components
+      - name: Install launcher Android SDK components
         run: sdkmanager 'platform-tools' 'platforms;android-35' 'build-tools;35.0.0'
       - name: Install dependencies
         run: npm install --no-audit --no-fund
@@ -49,14 +94,14 @@ jobs:
       - name: Build release APK locally
         working-directory: android
         run: chmod +x gradlew && ./gradlew assembleRelease --no-daemon --stacktrace
-      - name: Verify APK
+      - name: Verify launcher APK
         run: |
           set -e
           APK="android/app/build/outputs/apk/release/app-release.apk"
           test -s "$APK"
           sha256sum "$APK"
           ls -lh "$APK"
-      - name: Upload APK artifact
+      - name: Upload launcher APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: mythos-launcher-2.5.1-${{ github.run_number }}
