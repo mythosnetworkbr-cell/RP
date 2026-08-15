@@ -45,6 +45,11 @@ export async function prepareClient(onProgress,serverUri=SERVER_URI){
 
 export async function launchClient(serverUri=selectedServerUri){
   selectedServerUri=serverUri||selectedServerUri||SERVER_URI;
-  if(await openInstalledClient()) return true;
-  try{return await Linking.openURL(selectedServerUri)}catch{return false}
+  const opened=await openInstalledClient();
+  if(!opened) return false;
+  await new Promise(resolve=>setTimeout(resolve,900));
+  try{
+    await Linking.openURL(selectedServerUri);
+    return true;
+  }catch{return false}
 }
