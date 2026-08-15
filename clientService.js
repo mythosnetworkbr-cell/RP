@@ -3,7 +3,7 @@ import * as LegacyFileSystem from 'expo-file-system/legacy';
 import * as IntentLauncher from 'expo-intent-launcher';
 import {Linking} from 'react-native';
 
-export const CLIENT_URL='https://github.com/mythosnetworkbr-cell/RP/releases/download/mythos-client-v1.0.1/mythos-samp-mobile-2.11-v1.0.1.apk';
+export const CLIENT_URL='https://github.com/mythosnetworkbr-cell/RP/releases/download/mythos-client-v2.10.1/mythos-samp-mobile-2.10-v2.10.1.apk';
 export const CLIENT_PACKAGE='br.com.mythos.sampclient';
 export const SERVER_URI='samp://51.68.107.75:10961';
 let selectedServerUri=SERVER_URI;
@@ -11,7 +11,7 @@ let selectedServerUri=SERVER_URI;
 async function downloadToLocal(onProgress){
   const directory=new Directory(Paths.document,'mythos-client');
   if(!directory.exists) directory.create({intermediates:true,idempotent:true});
-  const destination=new File(directory,'mythos-samp-2.11-v1.0.1.apk');
+  const destination=new File(directory,'mythos-samp-2.10-v2.10.1.apk');
   if(destination.exists) destination.delete();
   const file=await File.downloadFileAsync(CLIENT_URL,destination,{idempotent:false});
   if(!file.exists||file.size<5*1024*1024) throw new Error('CLIENT_FILE_INVALID');
@@ -28,8 +28,6 @@ async function openInstalledClient(){
 
 export async function prepareClient(onProgress,serverUri=SERVER_URI){
   selectedServerUri=serverUri||SERVER_URI;
-  // Always refresh the client when the launcher is asked to play. This prevents an older broken
-  // installation from being silently reused after the client build was replaced.
   const file=await downloadToLocal(onProgress);
   const contentUri=await LegacyFileSystem.getContentUriAsync(file.uri);
   await IntentLauncher.startActivityAsync('android.intent.action.VIEW',{data:contentUri,type:'application/vnd.android.package-archive',flags:1|64});
