@@ -58,20 +58,12 @@ jobs:
           text = re.sub(r'^\s*implementation\(platform\("com\.google\.firebase:[^\n]+\)\)\n', '', text, flags=re.M)
           app.write_text(text)
 
-          # The GTA-2.11 source branch references PlayerTabList but does not ship that header.
-          # It is an optional scoreboard widget, so disable only that missing widget and keep
-          # keyboard/chat/dialog support intact.
-          gui = Path('app/src/main/cpp/samp/gui/gui.h')
-          g = gui.read_text()
-          g = g.replace('#include "samp_widgets/playerTabList.h"\n', '')
-          g = g.replace('    PlayerTabList* playertablist() const { return m_playerTabList; }\n', '    void* playertablist() const { return nullptr; }\n')
-          g = g.replace('    PlayerTabList* m_playerTabList;\n', '')
-          gui.write_text(g)
-
-          cpp = Path('app/src/main/cpp/samp/gui/gui.cpp')
-          c = cpp.read_text()
-          c = re.sub(r'\n\s*m_playerTabList = new PlayerTabList\(\);\n\s*this->addChild\(m_playerTabList\);\n\s*m_playerTabList->setMinSize\(UISettings::dialogMinSize\(\)\);\n\s*m_playerTabList->setMaxSize\(UISettings::dialogMaxSize\(\)\);\n\s*m_playerTabList->setVisible\(false\);\n', '\n', c)
-          cpp.write_text(c)
+          # Keep the PlayerTabList widget from the GTA-2.11 source intact.
+          # Fix the only case-sensitive header mismatch exposed by Linux builds.
+          rgba = Path('app/src/main/cpp/samp/game/rgba.h')
+          RGBA = Path('app/src/main/cpp/samp/game/RGBA.h')
+          if rgba.exists() and not RGBA.exists():
+              RGBA.write_bytes(rgba.read_bytes())
 
           manifest = Path('app/src/main/AndroidManifest.xml')
           m = manifest.read_text()
