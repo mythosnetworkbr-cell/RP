@@ -36,6 +36,8 @@ jobs:
         run: sdkmanager 'platform-tools' 'platforms;android-35' 'build-tools;35.0.0'
       - name: Install dependencies
         run: npm install --no-audit --no-fund
+      - name: Patch launcher server selection
+        run: node scripts/patch-server-buttons.js
       - name: Generate launcher icon
         run: node scripts/generate-icon.js
       - name: Generate bundled Brazilian beat
