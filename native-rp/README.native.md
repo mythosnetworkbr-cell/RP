@@ -1,0 +1,1 @@
+Active client: native Android Java. Godot is not part of the runtime.

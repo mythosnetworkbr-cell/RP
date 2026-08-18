@@ -1,0 +1,1 @@
+Use native Android build only.
