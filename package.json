@@ -1,8 +1,8 @@
 {
-  "name": "mythos-rp-launcher",
-  "version": "2.5.0",
+  "name": "mythos-samp",
+  "version": "2.6.0",
   "private": true,
-  "scripts": {"start":"expo start","android":"expo run:android","web":"expo start --web"},
+  "scripts": {"start":"expo start","android":"expo run:android","web":"expo start --web","brand:samp":"node scripts/brand-mythos-samp.js"},
   "dependencies": {
     "expo":"~54.0.0",
     "expo-file-system":"~19.0.23",
