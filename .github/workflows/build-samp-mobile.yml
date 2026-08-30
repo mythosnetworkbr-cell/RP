@@ -1,0 +1,63 @@
+name: Build SA-MP Mobile APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'SourceCodeSamp.zip.part-*'
+      - '.github/workflows/build-samp-mobile.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check source parts
+        run: |
+          set -e
+          count=$(find . -maxdepth 1 -type f -name 'SourceCodeSamp.zip.part-*' | wc -l)
+          echo "Found $count source parts"
+          test "$count" -ge 1
+
+      - name: Reassemble source ZIP
+        run: |
+          set -e
+          ls -1v SourceCodeSamp.zip.part-* | xargs cat > SourceCodeSamp.zip
+          unzip -t SourceCodeSamp.zip
+          mkdir -p source
+          unzip -q SourceCodeSamp.zip -d source
+          find source -maxdepth 2 -type f | head -50
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK/NDK
+        run: |
+          sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2" "ndk;27.0.12077973"
+
+      - name: Make Gradle executable
+        working-directory: source
+        run: chmod +x gradlew
+
+      - name: Build debug APK
+        working-directory: source
+        env:
+          ANDROID_NDK_VERSION: 27.0.12077973
+        run: ./gradlew --no-daemon assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: samp-mobile-debug-apk
+          path: source/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 14
