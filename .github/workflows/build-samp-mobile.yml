@@ -1,4 +1,4 @@
-name: Build SA-MP Mobile APK
+name: Crie o APK MYTHØS SAMP
 
 on:
   workflow_dispatch:
@@ -30,6 +30,59 @@ jobs:
           unzip -q SourceCodeSamp.zip -d source
           find source -maxdepth 2 -type f | head -50
 
+      - name: Apply MYTHØS SAMP branding
+        working-directory: source
+        run: |
+          set -e
+          echo '=== Replacing legacy News RP / RP branding ==='
+          find . -type f \( -name '*.xml' -o -name '*.java' -o -name '*.kt' -o -name '*.gradle' -o -name '*.properties' -o -name '*.json' -o -name '*.txt' -o -name '*.md' -o -name '*.cpp' -o -name '*.c' -o -name '*.h' -o -name '*.hpp' \) -print0 | while IFS= read -r -d '' f; do
+            perl -0pi -e 's/News RP/MYTHØS SAMP/g; s/NEWS RP/MYTHØS SAMP/g; s/NewsRP/MYTHØS SAMP/g; s/NEWSRP/MYTHØS SAMP/g; s/News Roleplay/MYTHØS SAMP/g; s/NEWS ROLEPLAY/MYTHØS SAMP/g; s/MYTHØS ROLEPLAY/MYTHØS SAMP/g; s/MYTHØS RP/MYTHØS SAMP/g; s/MYTHOS ROLEPLAY/MYTHØS SAMP/g; s/MYTHOS RP/MYTHØS SAMP/g' "$f"
+          done
+
+          # Android application label, regardless of the original label.
+          find app/src/main -name AndroidManifest.xml -type f -print0 | while IFS= read -r -d '' f; do
+            sed -i -E 's/android:label="[^"]*"/android:label="MYTHØS SAMP"/g' "$f"
+          done
+
+          # Common string resources used as launcher/app names.
+          find app/src/main/res -type f -name 'strings.xml' -print0 2>/dev/null | while IFS= read -r -d '' f; do
+            sed -i -E 's#(<string[[:space:]]+name="(app_name|application_name|app_label|launcher_name)"[^>]*>)[^<]*(</string>)#\1MYTHØS SAMP\3#g' "$f"
+          done
+
+          echo '=== Remaining legacy branding references ==='
+          if grep -RIni --exclude-dir=.git -E 'News[[:space:]]*RP|NewsRP|News Roleplay|MYTHØS RP|MYTHOS RP|MYTHØS ROLEPLAY|MYTHOS ROLEPLAY' .; then
+            echo 'WARNING: legacy references remain; review the list above.'
+          else
+            echo 'No legacy News RP / RP branding references found in text sources.'
+          fi
+
+      - name: Create MYTHØS SAMP icon and logo
+        working-directory: source
+        run: |
+          set -e
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq imagemagick
+          cat > mythos-samp-icon.svg <<'SVG'
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+            <defs>
+              <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#05030a"/><stop offset="1" stop-color="#18002f"/></linearGradient>
+              <linearGradient id="m" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#7b1cff"/><stop offset=".55" stop-color="#c04eff"/><stop offset="1" stop-color="#8a2be2"/></linearGradient>
+            </defs>
+            <rect width="1024" height="1024" rx="190" fill="url(#bg)"/>
+            <rect x="24" y="24" width="976" height="976" rx="175" fill="none" stroke="#c04eff" stroke-width="18"/>
+            <path d="M512 115 L620 250 L585 232 L550 295 L512 245 L474 295 L439 232 L404 250 Z" fill="url(#m)"/>
+            <path d="M290 350 L425 270 L512 350 L599 270 L734 350 L690 610 L512 770 L334 610 Z" fill="url(#m)"/>
+            <path d="M405 365 L512 450 L619 365 L585 570 L512 640 L439 570 Z" fill="#080510"/>
+            <text x="512" y="845" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-size="112" font-weight="900" fill="#ffffff">MYTHØS</text>
+            <text x="512" y="930" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-size="58" font-weight="900" letter-spacing="15" fill="#c04eff">SAMP</text>
+          </svg>
+          convert -background none mythos-samp-icon.svg mythos-samp-icon.png
+          find app/src/main/res -type f \( -iname '*ic_launcher*.png' -o -iname '*launcher_icon*.png' -o -iname '*app_icon*.png' \) -print -exec cp mythos-samp-icon.png {} \; 2>/dev/null || true
+          mkdir -p ../branding
+          cp mythos-samp-icon.svg ../branding/mythos-samp-logo.svg
+          cp mythos-samp-icon.png ../branding/mythos-samp-icon.png
+          echo 'MYTHØS SAMP branding assets generated.'
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -48,16 +101,33 @@ jobs:
         working-directory: source
         run: chmod +x gradlew
 
-      - name: Build debug APK
+      - name: Build MYTHØS SAMP debug APK
         working-directory: source
         env:
           ANDROID_NDK_VERSION: 27.0.12077973
         run: ./gradlew --no-daemon assembleDebug
 
-      - name: Upload APK
+      - name: Verify branded APK
+        run: |
+          set -e
+          APK=$(find source/app/build/outputs/apk/debug -type f -name '*.apk' | head -1)
+          test -s "$APK"
+          echo "APK: $APK"
+          sha256sum "$APK"
+          ls -lh "$APK"
+
+      - name: Upload MYTHØS SAMP APK
         uses: actions/upload-artifact@v4
         with:
-          name: samp-mobile-debug-apk
+          name: mythos-samp-debug-apk
           path: source/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 30
+
+      - name: Upload branding assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: mythos-samp-branding
+          path: branding/
+          if-no-files-found: error
+          retention-days: 30
