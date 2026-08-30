@@ -1,1 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 700"><defs><linearGradient id="edge" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ff00a8"/><stop offset=".5" stop-color="#9b2cff"/><stop offset="1" stop-color="#155cff"/></linearGradient><linearGradient id="rp" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#ff00a8"/><stop offset=".5" stop-color="#a33cff"/><stop offset="1" stop-color="#1570ff"/></linearGradient><filter id="glow"><feGaussianBlur stdDeviation="9" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><rect width="1000" height="700" rx="55" fill="#030305"/><rect x="18" y="18" width="964" height="664" rx="48" fill="none" stroke="url(#edge)" stroke-width="9" filter="url(#glow)"/><path d="M170 300 Q500 70 830 300" fill="none" stroke="#b026ff" stroke-width="6" opacity=".7"/><path d="M400 170 L500 70 L600 170 L570 155 L545 205 L500 150 L455 205 L430 155 Z" fill="url(#rp)" opacity=".9"/><text x="500" y="390" text-anchor="middle" font-family="Arial Black, sans-serif" font-size="175" font-weight="900" fill="#e9e9ef" stroke="url(#edge)" stroke-width="10" paint-order="stroke">MYTHØS</text><text x="500" y="555" text-anchor="middle" font-family="Arial Black, sans-serif" font-size="105" font-weight="900" font-style="italic" fill="url(#rp)" stroke="#111" stroke-width="8" paint-order="stroke">RP</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 700">
+<defs>
+  <linearGradient id="purple" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#7b1cff"/><stop offset=".55" stop-color="#c04eff"/><stop offset="1" stop-color="#8a2be2"/></linearGradient>
+  <linearGradient id="text" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#ffffff"/><stop offset=".65" stop-color="#eeeeff"/><stop offset="1" stop-color="#c04eff"/></linearGradient>
+  <filter id="glow"><feGaussianBlur stdDeviation="10" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<rect width="1000" height="700" rx="55" fill="#05030a"/>
+<rect x="18" y="18" width="964" height="664" rx="48" fill="none" stroke="url(#purple)" stroke-width="9" filter="url(#glow)"/>
+<path d="M350 220 L500 65 L650 220 L590 190 L560 250 L500 175 L440 250 L410 190 Z" fill="url(#purple)" filter="url(#glow)"/>
+<path d="M355 255 L430 205 L500 270 L570 205 L645 255 L610 420 L500 485 L390 420 Z" fill="url(#purple)" opacity=".95"/>
+<path d="M430 265 L500 325 L570 265 L550 390 L500 430 L450 390 Z" fill="#080510"/>
+<text x="500" y="535" text-anchor="middle" font-family="Arial Black, sans-serif" font-size="128" font-weight="900" fill="url(#text)">MYTHØS</text>
+<text x="500" y="625" text-anchor="middle" font-family="Arial Black, sans-serif" font-size="72" font-weight="900" letter-spacing="18" fill="#c04eff">SAMP</text>
+</svg>
