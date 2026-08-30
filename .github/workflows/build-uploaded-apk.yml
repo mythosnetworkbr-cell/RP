@@ -1,0 +1,86 @@
+name: Build uploaded SA-MP Android APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: uploaded-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-apk:
+    name: Compile Android APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android build tools
+        run: |
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager \
+            'platform-tools' \
+            'platforms;android-33' \
+            'build-tools;33.0.2' \
+            'ndk;26.2.11394342' \
+            'cmake;3.22.1'
+
+      - name: Reassemble source archive
+        run: |
+          set -euo pipefail
+          mkdir -p _source
+          ls -lh SourceCodeSamp.zip.part-* | sort
+          cat SourceCodeSamp.zip.part-* > _source/SourceCodeSamp.zip
+          unzip -t _source/SourceCodeSamp.zip >/dev/null
+          unzip -q _source/SourceCodeSamp.zip -d _source/unpacked
+          test -f _source/unpacked/android-apk/gradlew
+          chmod +x _source/unpacked/android-apk/gradlew
+
+      - name: Remove machine-specific local.properties
+        working-directory: _source/unpacked/android-apk
+        run: rm -f local.properties
+
+      - name: Build debug APK
+        working-directory: _source/unpacked/android-apk
+        env:
+          ANDROID_HOME: ${{ env.ANDROID_SDK_ROOT }}
+        run: ./gradlew :app:assembleDebug --no-daemon --stacktrace
+
+      - name: Verify APK
+        run: |
+          set -euo pipefail
+          APK='_source/unpacked/android-apk/app/build/outputs/apk/debug/app-debug.apk'
+          test -s "$APK"
+          echo "APK generated: $APK"
+          ls -lh "$APK"
+          sha256sum "$APK"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mythos-samp-mobile-debug-apk-${{ github.run_number }}
+          path: _source/unpacked/android-apk/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 30
