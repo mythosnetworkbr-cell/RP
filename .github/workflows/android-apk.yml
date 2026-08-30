@@ -1,4 +1,4 @@
-name: MYTHØS RP Android APK
+name: MYTHØS SAMP Android APK
 
 on:
   push:
@@ -10,7 +10,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: mythos-rp-android-${{ github.ref }}
+  group: mythos-samp-android-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -67,7 +67,7 @@ jobs:
           retention-days: 30
 
   build-launcher:
-    name: Build MYTHØS Launcher
+    name: Build MYTHØS SAMP APK
     needs: build-client
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -89,9 +89,11 @@ jobs:
         run: sdkmanager 'platform-tools' 'platforms;android-35' 'build-tools;35.0.0'
       - name: Install dependencies
         run: npm install --no-audit --no-fund
+      - name: Apply Mythos SAMP branding
+        run: npm run brand:samp
       - name: Patch launcher server selection
         run: node scripts/patch-server-buttons.js
-      - name: Generate launcher icon
+      - name: Generate Mythos SAMP icon
         run: node scripts/generate-icon.js
       - name: Generate bundled Brazilian beat
         run: node scripts/generate-music.js
@@ -109,17 +111,17 @@ jobs:
           test -s "$APK"
           sha256sum "$APK"
           ls -lh "$APK"
-      - name: Upload launcher APK artifact
+      - name: Upload Mythos SAMP APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: mythos-launcher-2.5.1-${{ github.run_number }}
+          name: mythos-samp-2.6.0-${{ github.run_number }}
           path: android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 30
       - name: Build summary
         if: always()
         run: |
-          echo '### MYTHØS Launcher 2.5.1' >> "$GITHUB_STEP_SUMMARY"
+          echo '### MYTHØS SAMP 2.6.0' >> "$GITHUB_STEP_SUMMARY"
           if [ -f android/app/build/outputs/apk/release/app-release.apk ]; then
             echo 'APK Release gerado e validado.' >> "$GITHUB_STEP_SUMMARY"
             echo "SHA-256: $(sha256sum android/app/build/outputs/apk/release/app-release.apk | cut -d' ' -f1)" >> "$GITHUB_STEP_SUMMARY"
